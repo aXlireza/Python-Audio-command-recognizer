@@ -1,0 +1,21 @@
+# Version
+ 0.1.0
+
+# How to use
+ You can run the realtime.py file already which won't require you any other action, it will start displaying a table of commands and how confident the model is that the voice had the specific command (the highest will be highlighted by an asterisk)
+
+# Dataset
+ on this version, the main dataset is from http://storage.googleapis.com/download.tensorflow.org/data/mini_speech_commands.zip with some custom commands datasets(which got very few samples so not doing much good on 'em)
+
+ You can Download the original dataset into the data folder and copy the content of data/custom_commands into the data/mini_speech_commands directory
+
+# Roadmap
+- The create_model.py file is where I train the model and store it in a keras file
+- The record_audio.py records a single second voice
+- The record_sequence.py records every second into a new file and is stored in the path defined in the file in sequence of 0.wav, 1.wav, 2.wav, ...
+- The test_model.py, you can set a couple of wav files for test (1 second)
+- finally the readltime.py opens the mic and chups the input into 1sec sequnces and puts each seconds into prediction and prints the likelihood of each command in the voice
+
+# The problems to solve in near future
+- the chuping of the mic input into a sequence of sec, could split a 1sec command into two different chunks, so we can do the chuping every 10 miliseconds or sth but still in the length of 1sec
+- train better command set or use a larger dataset to train on

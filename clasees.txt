@@ -1,0 +1,2 @@
+model.keras: ['down', 'go', 'left', 'no', 'right', 'stop', 'up', 'yes']
+model2.keras: ['down', 'go', 'hello', 'left', 'mute', 'no', 'right', 'sasho', 'stop', 'up', 'yes']
