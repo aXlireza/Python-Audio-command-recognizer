@@ -6,6 +6,7 @@ import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation
+import subprocess
 
 realtime_data_dir = pathlib.Path('data/realtime')
 data_dir = pathlib.Path('data/mini_speech_commands')
@@ -77,6 +78,11 @@ while True:
         print(label_names[9], ":", predictions[9], "+" if hightest_confidence_index[0]==9 else '')
         print(label_names[10], ":", predictions[10], "+" if hightest_confidence_index[0]==10 else '')
         print("==================================")
+        
+        # mute
+        if hightest_confidence_index[0] == 4 : subprocess.run(["python", "./linuxcommands/mute.py"])
+        # stop => lock
+        if hightest_confidence_index[0] == 8 : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
 
     except KeyboardInterrupt:
         # Stop the animation when the user presses Ctrl-C
