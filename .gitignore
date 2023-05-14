@@ -1,5 +1,5 @@
 data/mini_speech_commands
-data/realtime/temp.wav
+data/realtime/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
