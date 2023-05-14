@@ -8,13 +8,18 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 import subprocess
 
+from helpers.readlabels import readLabels
+
+MODEL = 'model2'
 realtime_data_dir = pathlib.Path('data/realtime')
 data_dir = pathlib.Path('data/mini_speech_commands')
 
-label_names = np.array(['bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'four', 'go', 'happy'
- 'hello', 'house', 'left', 'marvel', 'mute', 'nine', 'no', 'off', 'on', 'one'
- 'right', 'sasho', 'seven', 'sheila', 'six', 'stop', 'three', 'tree', 'two', 'up'
- 'wow', 'yes', 'zero'])
+label_names = np.array(readLabels('model2'))
+# label_names = np.array(['down', 'go', 'hello', 'left', 'mute', 'no', 'right', 'sasho', 'stop', 'up', 'yes'])
+# label_names = np.array(['bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'four', 'go', 'happy'
+#  'hello', 'house', 'left', 'marvel', 'mute', 'nine', 'no', 'off', 'on', 'one'
+#  'right', 'sasho', 'seven', 'sheila', 'six', 'stop', 'three', 'tree', 'two', 'up'
+#  'wow', 'yes', 'zero'])
 
 def get_spectrogram(waveform):
 	spectrogram = tf.signal.stft(waveform, frame_length=255, frame_step=128)
@@ -23,7 +28,7 @@ def get_spectrogram(waveform):
 	return spectrogram
 
 # Load your trained TensorFlow model
-model = tf.keras.models.load_model('model2.keras')
+model = tf.keras.models.load_model('models/'+MODEL+'/model.keras')
 
 # Set up the microphone
 chunk = 1024 # Record in chunks of 1024 samples
@@ -52,44 +57,35 @@ def record(record_seconds = 1):
 
 def read_record():
     my_plot_data = realtime_data_dir/'temp.wav'
-    # Do something with the prediction
     x = tf.io.read_file(str(my_plot_data))
     x, sample_rate = tf.audio.decode_wav(x, desired_channels=1, desired_samples=16000,)
     x = tf.squeeze(x, axis=-1)
     x = get_spectrogram(x)
     x = x[tf.newaxis,...]
+    return x
 
+def stat(predictions, hightest_confidence_index):
+    def render(id):
+        print(label_names[id], ":", predictions[id], "+" if hightest_confidence_index==id else "")
+    for n in range(len(label_names)): render(n)
+    print("==================================")
+    
 
 # Implement the loop
 while True:
-    try:
-        # Record the audio
-        record()
-        # predict
-        prediction = model(read_record())
+    # Record the audio
+    record()
 
-        predictions = list(tf.nn.softmax(prediction[0]).numpy())
-        hightest_confidence_index = np.argmax(prediction, axis=1)
-        
-        print(label_names[0], ":", predictions[0], "+" if hightest_confidence_index[0]==0 else "")
-        print(label_names[1], ":", predictions[1], "+" if hightest_confidence_index[0]==1 else '')
-        print(label_names[2], ":", predictions[2], "+" if hightest_confidence_index[0]==2 else '')
-        print(label_names[3], ":", predictions[3], "+" if hightest_confidence_index[0]==3 else '')
-        print(label_names[4], ":", predictions[4], "+" if hightest_confidence_index[0]==4 else '')
-        print(label_names[5], ":", predictions[5], "+" if hightest_confidence_index[0]==5 else '')
-        print(label_names[6], ":", predictions[6], "+" if hightest_confidence_index[0]==6 else '')
-        print(label_names[7], ":", predictions[7], "+" if hightest_confidence_index[0]==7 else '')
-        print(label_names[8], ":", predictions[8], "+" if hightest_confidence_index[0]==8 else '')
-        print(label_names[9], ":", predictions[9], "+" if hightest_confidence_index[0]==9 else '')
-        print(label_names[10], ":", predictions[10], "+" if hightest_confidence_index[0]==10 else '')
-        print("==================================")
-        
-        # # mute
-        # if hightest_confidence_index[0] == 4 : subprocess.run(["python", "./linuxcommands/mute.py"])
-        # # stop => lock
-        # if hightest_confidence_index[0] == 8 : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
+    # predict
+    prediction = model(read_record())
 
-    except KeyboardInterrupt:
-        # Stop the animation when the user presses Ctrl-C
-        # ani.event_source.stop()
-        break
+    # prepare predictions
+    predictions = list(tf.nn.softmax(prediction[0]).numpy())
+    hightest_confidence_index = np.argmax(prediction, axis=1)
+    # Diaply statistics(predictions)
+    stat(predictions, hightest_confidence_index)
+    
+    # # mute
+    # if hightest_confidence_index[0] == 4 : subprocess.run(["python", "./linuxcommands/mute.py"])
+    # # stop => lock
+    # if hightest_confidence_index[0] == 8 : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
