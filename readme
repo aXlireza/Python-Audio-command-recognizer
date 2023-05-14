@@ -19,3 +19,9 @@
 # The problems to solve in near future
 - the chuping of the mic input into a sequence of sec, could split a 1sec command into two different chunks, so we can do the chuping every 10 miliseconds or sth but still in the length of 1sec
 - train better command set or use a larger dataset to train on
+
+# TODO
+- Modify to analyze voice in shorter term
+- Train for situations where there's nothing specific being said
+- Pickup specific voice frequency
+- Recognize all the voice frequencies in the room and what they say(but don't run the command unless allows by master)
