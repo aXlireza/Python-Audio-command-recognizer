@@ -1,4 +1,7 @@
 data/mini_speech_commands
+data/mashedup
+data/another_dataset
+
 data/realtime/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
