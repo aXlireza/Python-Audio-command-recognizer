@@ -125,4 +125,4 @@ plt.ylabel('Accuracy [%]')
 
 model.evaluate(test_spectrogram_ds, return_dict=True)
 
-model.save('model3.keras')
+model.save('models/model4/model.keras')

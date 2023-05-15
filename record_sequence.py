@@ -3,7 +3,7 @@ import pyaudio
 import wave
 import numpy as np
 
-data_dir = 'data/mini_speech_commands/mute'
+data_dir = 'data/mashedup/mute'
 
 # Set up the microphone
 chunk = 1024 # Record in chunks of 1024 samples
@@ -23,7 +23,7 @@ stream = p.open(
 )
 
 # Implement the loop
-count = 0
+count = 14
 while True:
     # Record the audio
     frames = []
