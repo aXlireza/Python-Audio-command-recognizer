@@ -1,5 +1,8 @@
 # Version
- 0.1.0
+ 0.1.1
+
+# Updates
+    Running the realtime analysis in shorter splits
 
 # How to use
  You can run the realtime.py file already which won't require you any other action, it will start displaying a table of commands and how confident the model is that the voice had the specific command (the highest will be highlighted by an asterisk)
@@ -17,11 +20,9 @@
 - finally the readltime.py opens the mic and chups the input into 1sec sequnces and puts each seconds into prediction and prints the likelihood of each command in the voice
 
 # The problems to solve in near future
-- the chuping of the mic input into a sequence of sec, could split a 1sec command into two different chunks, so we can do the chuping every 10 miliseconds or sth but still in the length of 1sec
-- train better command set or use a larger dataset to train on
+- Higher quality model
 
 # TODO
-- Modify to analyze voice in shorter term
 - Train for situations where there's nothing specific being said
 - Pickup specific voice frequency
 - Recognize all the voice frequencies in the room and what they say(but don't run the command unless allows by master)
