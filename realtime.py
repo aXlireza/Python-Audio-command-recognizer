@@ -16,7 +16,7 @@ from helpers.audio import *
 MODEL = 'model4'
 REALTIME_DIR = 'data/realtime'
 CHUPLENGTH = 10
-CONFIDENCE_RATE = .999
+CONFIDENCE_RATE = .9999
 realtime_data_dir = pathlib.Path(REALTIME_DIR)
 data_dir = pathlib.Path('data/mini_speech_commands')
 
@@ -97,12 +97,22 @@ def stat(predictions):
     # print("==================================")
 
     # # # Print the top prediction
-    render(top_three_values[0])
+    # render(top_three_values[0])
 
 
     # # # only print hight confident one
-    # if predictions[top_three_values[0]] > CONFIDENCE_RATE: render(top_three_values[0])
+    if predictions[top_three_values[0]] >= CONFIDENCE_RATE: render(top_three_values[0])
 
+def action(predictions):
+    sorted_indices = np.argsort(predictions)[::-1]
+    # # mute
+    if sorted_indices[0] == 14 and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/mute.py"])
+    # # up => volume up
+    if sorted_indices[0] == 29 and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/volumeup.py"])
+    # # down => volume down
+    if sorted_indices[0] == 4 and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/volumedown.py"])
+    # # stop => lock
+    if sorted_indices[0] == 25 and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
 
 # Loop through the list and delete each file
 for file_name in os.listdir(REALTIME_DIR):
@@ -123,8 +133,6 @@ while True:
     
     # Diaply statistics(predictions)
     stat(predictions)
+    action(predictions)
     
-    # # mute
-    # if hightest_confidence_index[0] == 4 : subprocess.run(["python", "./linuxcommands/mute.py"])
-    # # stop => lock
-    # if hightest_confidence_index[0] == 8 : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
+    
