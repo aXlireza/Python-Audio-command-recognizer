@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
-
+from helpers.audio import *
 
 # Set the seed value for experiment reproducibility.
 seed = 42
@@ -43,27 +43,17 @@ val_ds = val_ds.map(squeeze, tf.data.AUTOTUNE)
 test_ds = val_ds.shard(num_shards=2, index=0)
 val_ds = val_ds.shard(num_shards=2, index=1)
 
-def get_spectrogram(waveform):
-	spectrogram = tf.signal.stft(waveform, frame_length=255, frame_step=128)
-	spectrogram = tf.abs(spectrogram)
-	spectrogram = spectrogram[..., tf.newaxis]
-	return spectrogram
-
 def make_spec_ds(ds):
 	return ds.map(
 		map_func=lambda audio,
-		label: (
-			get_spectrogram(audio),
-			label
-		),
+		label: (get_spectrogram(audio), label),
 		num_parallel_calls=tf.data.AUTOTUNE
 	)
 train_spectrogram_ds = make_spec_ds(train_ds)
 val_spectrogram_ds = make_spec_ds(val_ds)
 test_spectrogram_ds = make_spec_ds(test_ds)
 
-for example_spectrograms, example_spect_labels in train_spectrogram_ds.take(1):
-	break
+for example_spectrograms, example_spect_labels in train_spectrogram_ds.take(1): break
 
 train_spectrogram_ds = train_spectrogram_ds.cache().shuffle(10000).prefetch(tf.data.AUTOTUNE)
 val_spectrogram_ds = val_spectrogram_ds.cache().prefetch(tf.data.AUTOTUNE)
@@ -125,4 +115,4 @@ plt.ylabel('Accuracy [%]')
 
 model.evaluate(test_spectrogram_ds, return_dict=True)
 
-model.save('models/model4/model.keras')
+model.save('models/model5/model.keras')

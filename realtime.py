@@ -12,24 +12,17 @@ import os
 
 from helpers.readlabels import readLabels
 from helpers.audio import *
+from helpers.model import *
 
-MODEL = 'model4'
+MODEL = 'model5'
 REALTIME_DIR = 'data/realtime'
 CHUPLENGTH = 10
 CONFIDENCE_RATE = .9999
-realtime_data_dir = pathlib.Path(REALTIME_DIR)
-data_dir = pathlib.Path('data/mini_speech_commands')
 
 label_names = np.array(readLabels(MODEL))
 
-def get_spectrogram(waveform):
-	spectrogram = tf.signal.stft(waveform, frame_length=255, frame_step=128)
-	spectrogram = tf.abs(spectrogram)
-	spectrogram = spectrogram[..., tf.newaxis]
-	return spectrogram
-
 # Load your trained TensorFlow model
-model = tf.keras.models.load_model('models/'+MODEL+'/model.keras')
+model = readmodel(MODEL)
 
 # Set up the microphone
 chunk = 1024 # Record in chunks of 1024 samples
@@ -77,8 +70,6 @@ def read_record():
     # Get the output data as a bytes object
     x = output_data.getvalue()
 
-    # my_plot_data = realtime_data_dir/'temp.wav'
-    # x = tf.io.read_file(str(my_plot_data))
     x, sample_rate = tf.audio.decode_wav(x, desired_channels=1, desired_samples=16000,)
     x = tf.squeeze(x, axis=-1)
     x = get_spectrogram(x)
@@ -133,6 +124,6 @@ while True:
     
     # Diaply statistics(predictions)
     stat(predictions)
-    action(predictions)
+    # action(predictions)
     
     
