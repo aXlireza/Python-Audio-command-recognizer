@@ -1,4 +1,5 @@
 import wave
+import tensorflow as tf
 
 def audiostream(audio, format, channels, rate, chunk):
     return audio.open(
@@ -31,3 +32,17 @@ def record_audio(audio, stream, length, format, channels, rate, chunk, address, 
     wav.setframerate(rate)
     wav.writeframes(b''.join(frames))
     wav.close()
+
+def get_spectrogram(waveform):
+	spectrogram = tf.signal.stft(waveform, frame_length=255, frame_step=128)
+	spectrogram = tf.abs(spectrogram)
+	spectrogram = spectrogram[..., tf.newaxis]
+	return spectrogram
+
+def processaudio(address):
+    x = tf.io.read_file(str(address))
+    x, sample_rate = tf.audio.decode_wav(x, desired_channels=1, desired_samples=16000,)
+    x = tf.squeeze(x, axis=-1)
+    x = get_spectrogram(x)
+    x = x[tf.newaxis,...]
+    return x
