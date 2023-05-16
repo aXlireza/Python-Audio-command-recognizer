@@ -39,8 +39,9 @@ def get_spectrogram(waveform):
 	spectrogram = spectrogram[..., tf.newaxis]
 	return spectrogram
 
-def processaudio(address):
-    x = tf.io.read_file(str(address))
+def processaudio(address, audiodata):
+    
+    x = tf.io.read_file(str(address)) if address else audiodata
     x, sample_rate = tf.audio.decode_wav(x, desired_channels=1, desired_samples=16000,)
     x = tf.squeeze(x, axis=-1)
     x = get_spectrogram(x)
