@@ -1,8 +1,8 @@
 # Version
- 0.1.1
+ 0.1.2
 
 # Updates
-    Running the realtime analysis in shorter splits
+    Added Another Model(yamnet) to detect whether the sound recorded is actually speech, so it wouldn't try to classify the noise or silence
 
 # How to use
  You can run the realtime.py file already which won't require you any other action, it will start displaying a table of commands and how confident the model is that the voice had the specific command (the highest will be highlighted by an asterisk)

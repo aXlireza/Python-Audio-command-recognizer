@@ -9,6 +9,12 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 import subprocess
 import os
+import csv
+import tensorflow_hub as hub
+
+import matplotlib.pyplot as plt
+from IPython.display import Audio
+from scipy.io import wavfile
 
 from helpers.readlabels import readLabels
 from helpers.audio import *
@@ -23,6 +29,8 @@ label_names = np.array(readLabels(MODEL))
 
 # Load your trained TensorFlow model
 model = readmodel(MODEL)
+# Load the model to check if it's speech
+checkmodel = hub.load('./yamnet/yamnet_1')
 
 # Set up the microphone
 chunk = 1024 # Record in chunks of 1024 samples
@@ -68,13 +76,7 @@ def read_record():
                     output_file.writeframes(input_file.readframes(input_file.getnframes()))
 
     # Get the output data as a bytes object
-    x = output_data.getvalue()
-
-    x, sample_rate = tf.audio.decode_wav(x, desired_channels=1, desired_samples=16000,)
-    x = tf.squeeze(x, axis=-1)
-    x = get_spectrogram(x)
-    x = x[tf.newaxis,...]
-    return x
+    return output_data.getvalue()
 
 def render(id):
     print(label_names[id], ":", predictions[id])
@@ -105,6 +107,59 @@ def action(predictions):
     # # stop => lock
     if sorted_indices[0] == 25 and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
 
+def isitspeech(audiotopredict):
+
+    # Find the name of the class with the top score when mean-aggregated across frames.
+    def class_names_from_csv(class_map_csv_text):
+        class_names = []
+        with tf.io.gfile.GFile(class_map_csv_text) as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader: class_names.append(row['display_name'])
+        return class_names
+
+    class_map_path = checkmodel.class_map_path().numpy()
+    class_names = class_names_from_csv(class_map_path)
+
+    def ensure_sample_rate(original_sample_rate, waveform,
+                        desired_sample_rate=16000):
+        if original_sample_rate != desired_sample_rate:
+            desired_length = int(round(float(len(waveform)) /
+                                    original_sample_rate * desired_sample_rate))
+            waveform = scipy.signal.resample(waveform, desired_length)
+        return desired_sample_rate, waveform
+
+    wav_file_name = './yamnet/speech_whistling2.wav'
+    # wav_file_name = './yamnet/miaow_16k.wav'
+
+
+    output_stream = io.BytesIO(audiotopredict)
+    # Read the WAV file from the BytesIO object
+    sample_rate, wav_data = wavfile.read(output_stream, 'rb')
+
+    # sample_rate, wav_data = wavfile.read(wav_file_name, 'rb')
+    sample_rate, wav_data = ensure_sample_rate(sample_rate, wav_data)
+
+    # Show some basic information about the audio.
+    duration = len(wav_data)/sample_rate
+    # print(f'Sample rate: {sample_rate} Hz')
+    # print(f'Total duration: {duration:.2f}s')
+    # print(f'Size of the input: {len(wav_data)}')
+
+    # Listening to the wav file.
+    Audio(wav_data, rate=sample_rate)
+
+    waveform = wav_data / tf.int16.max
+
+    # Run the model, check the output.
+    scores, embeddings, spectrogram = checkmodel(waveform)
+
+    scores_np = scores.numpy()
+    spectrogram_np = spectrogram.numpy()
+    infered_class = class_names[scores_np.mean(axis=0).argmax()]
+    # print(f'The main sound is: {infered_class}')
+    print(infered_class)
+    return infered_class
+
 # Loop through the list and delete each file
 for file_name in os.listdir(REALTIME_DIR):
     file_path = os.path.join(REALTIME_DIR, file_name)
@@ -117,13 +172,14 @@ while True:
 
     # predict
     parameter = read_record()
-    prediction = model(parameter)
 
     # prepare predictions
-    predictions = list(tf.nn.softmax(prediction[0]).numpy())
-    
-    # Diaply statistics(predictions)
-    stat(predictions)
-    # action(predictions)
-    
+    if isitspeech(parameter) == "Speech":
+        prediction = model(processaudio(audiodata=parameter, address=''))
+        predictions = list(tf.nn.softmax(prediction[0]).numpy())
+        
+        # Diaply statistics(predictions)
+        stat(predictions)
+        # action(predictions)
+        
     
