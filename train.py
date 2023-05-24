@@ -6,32 +6,28 @@ from tensorflow.keras import layers
 from helpers.audio import *
 
 # Set the seed value for experiment reproducibility.
-seed = 42
-tf.random.set_seed(seed)
-np.random.seed(seed)
-EPOCHS = 30
-BATCH_SIZE = 50
+SEED = 42
+EPOCHS = 120
+BATCH_SIZE = 27
+VALIDATION_SPLIT = 0.2
+tf.random.set_seed(SEED)
+np.random.seed(SEED)
 
-
-# Dataset paths
-DATASET_PATH = 'data/mashedup'
-# dataset2 = 'data/another_dataset/augmented_dataset'
-# dataset3 = 'data/another_dataset/augmented_dataset_verynoisy'
+MODEL_SAVE='models/AVA3/model.keras'
+DATASET_PATH = 'data/custom_commands'
 data_dir = pathlib.Path(DATASET_PATH)
 
 train_ds, val_ds = tf.keras.utils.audio_dataset_from_directory(
     data_dir,
     batch_size=BATCH_SIZE,
-    validation_split=0.2,
-    seed=0,
+    validation_split=VALIDATION_SPLIT,
+    seed=SEED,
     output_sequence_length=16000,
     subset='both'
 )
 
 label_names = np.array(train_ds.class_names)
 print('labels:', label_names)
-
-
 
 def squeeze(audio, labels):
 	audio = tf.squeeze(audio, axis=-1)
@@ -63,26 +59,29 @@ input_shape = example_spectrograms.shape[1:]
 print('Input shape:', input_shape)
 num_labels = len(label_names)
 
-norm_layer = layers.Normalization()
-# Fit the state of the layer to the spectrograms
-# with `Normalization.adapt`.
-norm_layer.adapt(data=train_spectrogram_ds.map(map_func=lambda spec, label: spec))
+norm_layer = layers.BatchNormalization()
 
 model = tf.keras.Sequential([
-	layers.Input(shape=input_shape),
-	# Downsample the input.
-	layers.Resizing(32, 32),
-	# Normalize.
-	norm_layer,
-	layers.Conv2D(32, 3, activation='relu'),
-	layers.Conv2D(64, 3, activation='relu'),
-	layers.MaxPooling2D(),
-	layers.Dropout(0.25),
-	layers.Flatten(),
-	layers.Dense(128, activation='relu'),
-	layers.Dropout(0.5),
-	layers.Dense(num_labels),
+    layers.Input(shape=input_shape),
+    # Downsample the input.
+    layers.Resizing(32, 32),
+    # Normalize.
+    norm_layer,
+    layers.Conv2D(32, 3, activation='relu'),
+    layers.Conv2D(64, 3, activation='relu'),
+    layers.MaxPooling2D(),
+    layers.Dropout(0.25),
+    layers.Conv2D(128, 3, activation='relu'),
+    layers.MaxPooling2D(),
+    layers.Dropout(0.25),
+    layers.TimeDistributed(layers.Flatten()),
+    layers.GRU(128, return_sequences=True),
+    layers.Dropout(0.5),
+    layers.GRU(128),
+    layers.Dropout(0.5),
+    layers.Dense(num_labels, activation='softmax'),
 ])
+
 
 model.compile(
 	optimizer=tf.keras.optimizers.Adam(),
@@ -94,7 +93,7 @@ history = model.fit(
     train_spectrogram_ds,
     validation_data=val_spectrogram_ds,
     epochs=EPOCHS,
-    callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=2),
+    # callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=5),
 )
 
 metrics = history.history
@@ -115,4 +114,4 @@ plt.ylabel('Accuracy [%]')
 
 model.evaluate(test_spectrogram_ds, return_dict=True)
 
-model.save('models/model5/model.keras')
+model.save(MODEL_SAVE)
