@@ -167,12 +167,10 @@ while True:
             if label_names[sorted_indices[0]] == "ava" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
                 actionable = True
                 if wasitplaying == True: subprocess.run(["python", "./linuxcommands/pause.py"])
-                add_icon("atomic")
                 print("ACTIVATED")
             elif actionable == True and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
                 actionable = False
                 process_command(predictions, sorted_indices)
                 last_detection_time = current_time
                 if wasitplaying == True: subprocess.run(["python", "./linuxcommands/play.py"])
-                add_icon("atomic")
                 print("DEACTIVATED")
