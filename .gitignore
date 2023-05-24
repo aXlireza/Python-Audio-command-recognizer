@@ -1,6 +1,4 @@
-data/mini_speech_commands
-data/mashedup
-data/another_dataset
+data/custom_commands
 
 data/realtime/*
 # Byte-compiled / optimized / DLL files
