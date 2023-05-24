@@ -1,31 +1,28 @@
 import tensorflow as tf
 import pyaudio
 import wave
-import io
-import audioop
-import pathlib
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.animation import FuncAnimation
 import subprocess
 import os
 import csv
 import tensorflow_hub as hub
-
-import matplotlib.pyplot as plt
-from IPython.display import Audio
 from scipy.io import wavfile
-
 from helpers.readlabels import readLabels
 from helpers.audio import *
 from helpers.model import *
+import time
 
-MODEL = 'model5'
+
+MODEL = 'AVA3'
 REALTIME_DIR = 'data/realtime'
-CHUPLENGTH = 10
-CONFIDENCE_RATE = .9999
+CHUPLENGTH = 4
+CONFIDENCE_RATE = .1099
 
 label_names = np.array(readLabels(MODEL))
+
+# CoolDown mechanism
+cooldown_duration = 1  # Set the cooldown duration in seconds
+last_detection_time = 0
 
 # Load your trained TensorFlow model
 model = readmodel(MODEL)
@@ -48,41 +45,26 @@ def record():
     record_audio(p, stream, int(rate/chunk/CHUPLENGTH), format, channels, rate, chunk, REALTIME_DIR+'/'+str(recorded_file_count)+'.wav', False)
     recorded_file_count += 1
 
-    # remove off top
     recordedfiles = sorted(os.listdir(REALTIME_DIR), key=lambda x: int(x.split('.')[0]))
     num_files = len(recordedfiles)
-    os.remove(os.path.join(REALTIME_DIR, recordedfiles[0])) if num_files == CHUPLENGTH+1 else ""
-
-def read_record():
-    # Sort the files list numerically
-    files_sorted = sorted(os.listdir(REALTIME_DIR), key=lambda x: int(x.split('.')[0]))
-
-    # Open the first file to get the parameters
-    with wave.open(os.path.join(REALTIME_DIR, files_sorted[0]), 'rb') as first_file:
+     # Create the output file
+    with wave.open(os.path.join(REALTIME_DIR, recordedfiles[0]), 'rb') as first_file:
         params = first_file.getparams()
-
-        # Create a BytesIO object to hold the output data
-        output_data = io.BytesIO()
-
-        # Create the output file
-        with wave.open(output_data, 'wb') as output_file:
-
+        with wave.open('data/realtime.wav', 'wb') as output_file:
             # Write the parameters to the output file
             output_file.setparams(params)
 
             # Write the data from each file to the output file
-            for filename in files_sorted:
+            for filename in recordedfiles:
                 with wave.open(os.path.join(REALTIME_DIR, filename), 'rb') as input_file:
                     output_file.writeframes(input_file.readframes(input_file.getnframes()))
-
-    # Get the output data as a bytes object
-    return output_data.getvalue()
+    # remove off top
+    os.remove(os.path.join(REALTIME_DIR, recordedfiles[0])) if num_files == CHUPLENGTH+1 else ""
 
 def render(id):
     print(label_names[id], ":", predictions[id])
 
-def stat(predictions):
-    sorted_indices = np.argsort(predictions)[::-1]
+def stat(predictions, sorted_indices):
     top_three_values = sorted_indices[:3]
     
     # # # print topm three predictions
@@ -92,20 +74,27 @@ def stat(predictions):
     # # # Print the top prediction
     # render(top_three_values[0])
 
-
     # # # only print hight confident one
     if predictions[top_three_values[0]] >= CONFIDENCE_RATE: render(top_three_values[0])
 
 def action(predictions):
     sorted_indices = np.argsort(predictions)[::-1]
     # # mute
-    if sorted_indices[0] == 14 and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/mute.py"])
+    if label_names[sorted_indices[0]] == "mute" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/mute.py"])
+    # # unmute
+    if label_names[sorted_indices[0]] == "unmute" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/unmute.py"])
     # # up => volume up
-    if sorted_indices[0] == 29 and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/volumeup.py"])
+    if label_names[sorted_indices[0]] == "up" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/volumeup.py"])
     # # down => volume down
-    if sorted_indices[0] == 4 and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/volumedown.py"])
+    if label_names[sorted_indices[0]] == "down" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/volumedown.py"])
     # # stop => lock
-    if sorted_indices[0] == 25 and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
+    if label_names[sorted_indices[0]] == "stop" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
+    # # gpt => pull up chat gpt
+    if label_names[sorted_indices[0]] == "gpt" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
+    # # play
+    if label_names[sorted_indices[0]] == "play" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/play.py"])
+    # # pause
+    if label_names[sorted_indices[0]] == "pause" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/pause.py"])
 
 def isitspeech(audiotopredict):
 
@@ -120,44 +109,18 @@ def isitspeech(audiotopredict):
     class_map_path = checkmodel.class_map_path().numpy()
     class_names = class_names_from_csv(class_map_path)
 
-    def ensure_sample_rate(original_sample_rate, waveform,
-                        desired_sample_rate=16000):
+    def ensure_sample_rate(original_sample_rate, waveform, desired_sample_rate=16000):
         if original_sample_rate != desired_sample_rate:
-            desired_length = int(round(float(len(waveform)) /
-                                    original_sample_rate * desired_sample_rate))
+            desired_length = int(round(float(len(waveform)) / original_sample_rate * desired_sample_rate))
             waveform = scipy.signal.resample(waveform, desired_length)
         return desired_sample_rate, waveform
 
-    wav_file_name = './yamnet/speech_whistling2.wav'
-    # wav_file_name = './yamnet/miaow_16k.wav'
-
-
-    output_stream = io.BytesIO(audiotopredict)
-    # Read the WAV file from the BytesIO object
-    sample_rate, wav_data = wavfile.read(output_stream, 'rb')
-
-    # sample_rate, wav_data = wavfile.read(wav_file_name, 'rb')
+    sample_rate, wav_data = wavfile.read(audiotopredict, 'rb')
     sample_rate, wav_data = ensure_sample_rate(sample_rate, wav_data)
-
-    # Show some basic information about the audio.
-    duration = len(wav_data)/sample_rate
-    # print(f'Sample rate: {sample_rate} Hz')
-    # print(f'Total duration: {duration:.2f}s')
-    # print(f'Size of the input: {len(wav_data)}')
-
-    # Listening to the wav file.
-    Audio(wav_data, rate=sample_rate)
-
     waveform = wav_data / tf.int16.max
-
-    # Run the model, check the output.
     scores, embeddings, spectrogram = checkmodel(waveform)
-
     scores_np = scores.numpy()
-    spectrogram_np = spectrogram.numpy()
     infered_class = class_names[scores_np.mean(axis=0).argmax()]
-    # print(f'The main sound is: {infered_class}')
-    print(infered_class)
     return infered_class
 
 # Loop through the list and delete each file
@@ -165,21 +128,64 @@ for file_name in os.listdir(REALTIME_DIR):
     file_path = os.path.join(REALTIME_DIR, file_name)
     os.remove(file_path)
 
-# Implement the loop
+def process_command(predictions, sorted_indices):
+    # Diaply statistics(predictions)
+    stat(predictions, sorted_indices)
+    action(predictions)
+
+def cooldown(current_time):
+    time_since_last_detection = current_time - last_detection_time
+    return time_since_last_detection
+
+actionable = False
+
+def is_music_playing():
+    try:
+        output = subprocess.check_output(["playerctl", "status"]).decode("utf-8").strip()
+        if output == "Playing":
+            return True
+    except subprocess.CalledProcessError:
+        pass
+
+    return False
+
+wasitplaying = None
+
+# Add an icon to the top toolbar
+def add_icon(icon_name):
+    subprocess.run([
+        "gsettings", "set", "com.canonical.Unity.Panel", "systray-whitelist",
+        f"[{icon_name}] + gsettings.get('com.canonical.Unity.Panel', 'systray-whitelist')"
+    ])
+
+# Remove an icon from the top toolbar
+def remove_icon(icon_name):
+    subprocess.run(["gsettings", "set", "com.canonical.Unity.Panel", "systray-whitelist",
+                    "gsettings.get('com.canonical.Unity.Panel', 'systray-whitelist').replace('%s', '')" % icon_name])
+
 while True:
-    # Record the audio
     record()
 
-    # predict
-    parameter = read_record()
-
-    # prepare predictions
-    if isitspeech(parameter) == "Speech":
-        prediction = model(processaudio(audiodata=parameter, address=''))
+    if isitspeech('data/realtime.wav') == "Speech":
+        # COMMAND RECOGNITION
+        prediction = model(processaudio(audiodata='', address='data/realtime.wav'))
         predictions = list(tf.nn.softmax(prediction[0]).numpy())
-        
-        # Diaply statistics(predictions)
-        stat(predictions)
-        # action(predictions)
-        
-    
+        sorted_indices = np.argsort(predictions)[::-1]
+        if label_names[sorted_indices[0]] != "noise":
+            current_time = time.time()
+            cooldown(current_time)
+
+            wasitplaying = is_music_playing()
+            # stat(predictions, sorted_indices)
+            if label_names[sorted_indices[0]] == "ava" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
+                actionable = True
+                if wasitplaying == True: subprocess.run(["python", "./linuxcommands/pause.py"])
+                add_icon("atomic")
+                print("ACTIVATED")
+            elif actionable == True and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
+                actionable = False
+                process_command(predictions, sorted_indices)
+                last_detection_time = current_time
+                if wasitplaying == True: subprocess.run(["python", "./linuxcommands/play.py"])
+                add_icon("atomic")
+                print("DEACTIVATED")
