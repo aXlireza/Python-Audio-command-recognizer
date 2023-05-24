@@ -12,8 +12,8 @@ def compile(model, optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.Sp
         metrics=metrics,
     )
 
-def prediction_bar(model, label_names, x, name='no'):
-	predictions = model(processaudio(address=x, audiodata=''))
+def prediction_bar(model, label_names, x='', audiodata='', name='no'):
+	predictions = model(processaudio(address=x, audiodata=audiodata))
 	print(predictions[0])
 	plt.bar(label_names, tf.nn.softmax(predictions[0]))
 	plt.title(name)
