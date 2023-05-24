@@ -23,6 +23,13 @@
 - Higher quality model
 
 # TODO
-- Train for situations where there's nothing specific being said
+- Voice Activation Command
 - Pickup specific voice frequency
 - Recognize all the voice frequencies in the room and what they say(but don't run the command unless allows by master)
+
+# Challenges
+- On the realtime.py where I try to records small cunks of data and put them back together to form a 1sec sound and feed it directly to the model(without saving it to a file)
+    - It wouldn't give the same quality apparently to the model to predict correctly
+    - Making too much small chunks would make the prediction repeat many many times while only one word was said
+- Realized in the dataset, having to many samples for a command rather than small amount of samples for another one, makes an unfair playground for the other cammands(that have fewer samples) and bias the prediction toward the larger command sample set
+- When music or other sounds are setting noise, it wouldn't understand me and would make sense of the song speech, which is not intended => So => I'm trying to filter out any frequencies rather my voice frequency which requires to understand my frequency first

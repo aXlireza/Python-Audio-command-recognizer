@@ -3,7 +3,8 @@ import pyaudio
 import wave
 import numpy as np
 
-data_dir = 'data/mashedup/mute'
+data_dir = 'data/custom_commands/ava'
+count = 91
 
 # Set up the microphone
 chunk = 1024 # Record in chunks of 1024 samples
@@ -23,7 +24,6 @@ stream = p.open(
 )
 
 # Implement the loop
-count = 14
 while True:
     # Record the audio
     frames = []

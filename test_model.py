@@ -6,8 +6,12 @@ import tensorflow as tf
 from helpers.readlabels import readLabels
 from helpers.model import *
 
-MODEL = 'model4'
+MODEL = 'model10'
+
 label_names = np.array(readLabels(MODEL))
 model = readmodel(MODEL)
 compile(model)
-prediction_bar(model, label_names, 'output.wav', 'mute')
+
+prediction_bar(model, label_names, './output.wav', 'down')
+
+prediction_bar(model, label_names, audiodata=read_record(), name='down')
