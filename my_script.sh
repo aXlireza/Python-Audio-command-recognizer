@@ -1,2 +1,2 @@
 #!/bin/bash
-python "/home/axlireza/Projects/Tensorflow/Simple audio recognition: Recognizing keywords/realtime.py"
+python /home/axlireza/Projects/Tensorflow/Simple_audio_recognition:Recognizing_keywords/realtime.py

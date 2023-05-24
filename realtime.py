@@ -150,19 +150,6 @@ def is_music_playing():
     return False
 
 wasitplaying = None
-
-# Add an icon to the top toolbar
-def add_icon(icon_name):
-    subprocess.run([
-        "gsettings", "set", "com.canonical.Unity.Panel", "systray-whitelist",
-        f"[{icon_name}] + gsettings.get('com.canonical.Unity.Panel', 'systray-whitelist')"
-    ])
-
-# Remove an icon from the top toolbar
-def remove_icon(icon_name):
-    subprocess.run(["gsettings", "set", "com.canonical.Unity.Panel", "systray-whitelist",
-                    "gsettings.get('com.canonical.Unity.Panel', 'systray-whitelist').replace('%s', '')" % icon_name])
-
 while True:
     record()
 
