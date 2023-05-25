@@ -150,6 +150,9 @@ def is_music_playing():
     return False
 
 wasitplaying = None
+secondary_wasitplaying = None
+actionable = False
+
 while True:
     record()
 
@@ -159,16 +162,16 @@ while True:
         predictions = list(tf.nn.softmax(prediction[0]).numpy())
         sorted_indices = np.argsort(predictions)[::-1]
         if label_names[sorted_indices[0]] != "noise":
+            
             current_time = time.time()
             cooldown(current_time)
 
-            wasitplaying = is_music_playing()
-            # stat(predictions, sorted_indices)
-            if label_names[sorted_indices[0]] == "ava" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
+            if actionable == False and label_names[sorted_indices[0]] == "ava" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
+                wasitplaying = is_music_playing()
                 actionable = True
                 if wasitplaying == True: subprocess.run(["python", "./linuxcommands/pause.py"])
                 print("ACTIVATED")
-            elif actionable == True and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
+            elif actionable == True and label_names[sorted_indices[0]] != "ava" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
                 actionable = False
                 process_command(predictions, sorted_indices)
                 last_detection_time = current_time
