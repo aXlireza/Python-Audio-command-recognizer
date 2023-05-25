@@ -13,15 +13,15 @@ from helpers.model import *
 import time
 
 
-MODEL = 'AVA3'
+MODEL = 'AVA4'
 REALTIME_DIR = 'data/realtime'
-CHUPLENGTH = 4
+CHUPLENGTH = 3
 CONFIDENCE_RATE = .1099
 
 label_names = np.array(readLabels(MODEL))
 
 # CoolDown mechanism
-cooldown_duration = 1  # Set the cooldown duration in seconds
+cooldown_duration = 2  # Set the cooldown duration in seconds
 last_detection_time = 0
 
 # Load your trained TensorFlow model
@@ -90,11 +90,17 @@ def action(predictions):
     # # stop => lock
     if label_names[sorted_indices[0]] == "stop" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
     # # gpt => pull up chat gpt
-    if label_names[sorted_indices[0]] == "gpt" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
+    # if label_names[sorted_indices[0]] == "gpt" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/openchatgpt.py"])
     # # play
     if label_names[sorted_indices[0]] == "play" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/play.py"])
     # # pause
     if label_names[sorted_indices[0]] == "pause" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/pause.py"])
+    # # music
+    if label_names[sorted_indices[0]] == "music" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/music.py"])
+    # # next
+    if label_names[sorted_indices[0]] == "next" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/next.py"])
+    # # server
+    # if label_names[sorted_indices[0]] == "server" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/pause.py"])
 
 def isitspeech(audiotopredict):
 
@@ -167,13 +173,13 @@ while True:
             cooldown(current_time)
 
             if actionable == False and label_names[sorted_indices[0]] == "ava" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
+                print("ACTIVATED")
                 wasitplaying = is_music_playing()
                 actionable = True
                 if wasitplaying == True: subprocess.run(["python", "./linuxcommands/pause.py"])
-                print("ACTIVATED")
             elif actionable == True and label_names[sorted_indices[0]] != "ava" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE and cooldown(current_time) > cooldown_duration:
                 actionable = False
-                process_command(predictions, sorted_indices)
                 last_detection_time = current_time
                 if wasitplaying == True: subprocess.run(["python", "./linuxcommands/play.py"])
+                process_command(predictions, sorted_indices)
                 print("DEACTIVATED")

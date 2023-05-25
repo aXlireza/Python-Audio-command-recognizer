@@ -26,6 +26,7 @@
 - Voice Activation Command
 - Pickup specific voice frequency
 - Recognize all the voice frequencies in the room and what they say(but don't run the command unless allows by master)
+- Multi step commands(like how it waits for next command after the activation key command)
 
 # Challenges
 - On the realtime.py where I try to records small cunks of data and put them back together to form a 1sec sound and feed it directly to the model(without saving it to a file)

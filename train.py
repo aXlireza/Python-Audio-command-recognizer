@@ -13,7 +13,7 @@ VALIDATION_SPLIT = 0.2
 tf.random.set_seed(SEED)
 np.random.seed(SEED)
 
-MODEL_SAVE='models/AVA3/model.keras'
+MODEL_SAVE='models/AVA4/model.keras'
 DATASET_PATH = 'data/custom_commands'
 data_dir = pathlib.Path(DATASET_PATH)
 

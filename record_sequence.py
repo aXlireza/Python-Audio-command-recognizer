@@ -4,7 +4,7 @@ import wave
 import numpy as np
 
 data_dir = 'data/custom_commands/ava'
-count = 91
+count = 112
 
 # Set up the microphone
 chunk = 1024 # Record in chunks of 1024 samples
