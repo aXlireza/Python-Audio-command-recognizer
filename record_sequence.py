@@ -3,8 +3,8 @@ import pyaudio
 import wave
 import numpy as np
 
-data_dir = 'data/custom_commands/ava'
-count = 112
+data_dir = 'data/custom_commands/flick'
+count = 0
 
 # Set up the microphone
 chunk = 1024 # Record in chunks of 1024 samples

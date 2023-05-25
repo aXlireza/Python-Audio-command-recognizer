@@ -7,13 +7,13 @@ from helpers.audio import *
 
 # Set the seed value for experiment reproducibility.
 SEED = 42
-EPOCHS = 120
+EPOCHS = 140
 BATCH_SIZE = 27
 VALIDATION_SPLIT = 0.2
 tf.random.set_seed(SEED)
 np.random.seed(SEED)
 
-MODEL_SAVE='models/AVA4/model.keras'
+MODEL_SAVE='models/AVA7/model.keras'
 DATASET_PATH = 'data/custom_commands'
 data_dir = pathlib.Path(DATASET_PATH)
 

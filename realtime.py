@@ -13,10 +13,10 @@ from helpers.model import *
 import time
 
 
-MODEL = 'AVA4'
+MODEL = 'AVA7'
 REALTIME_DIR = 'data/realtime'
 CHUPLENGTH = 3
-CONFIDENCE_RATE = .1099
+CONFIDENCE_RATE = .098
 
 label_names = np.array(readLabels(MODEL))
 
@@ -88,7 +88,7 @@ def action(predictions):
     # # down => volume down
     if label_names[sorted_indices[0]] == "down" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/volumedown.py"])
     # # stop => lock
-    if label_names[sorted_indices[0]] == "stop" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
+    if label_names[sorted_indices[0]] == "lock" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/lockscreen.py"])
     # # gpt => pull up chat gpt
     # if label_names[sorted_indices[0]] == "gpt" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/openchatgpt.py"])
     # # play
@@ -99,6 +99,8 @@ def action(predictions):
     if label_names[sorted_indices[0]] == "music" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/music.py"])
     # # next
     if label_names[sorted_indices[0]] == "next" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/next.py"])
+    # # finger_flutter => wakeup
+    # if label_names[sorted_indices[0]] == "finger_flutter" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/wakeup.py"])
     # # server
     # if label_names[sorted_indices[0]] == "server" and predictions[sorted_indices[0]] >= CONFIDENCE_RATE : subprocess.run(["python", "./linuxcommands/pause.py"])
 
@@ -162,7 +164,9 @@ actionable = False
 while True:
     record()
 
-    if isitspeech('data/realtime.wav') == "Speech":
+    isitspeechkey = isitspeech('data/realtime.wav')
+    # print(isitspeechkey)
+    if isitspeechkey == "Speech" or isitspeechkey == 'Hands':
         # COMMAND RECOGNITION
         prediction = model(processaudio(audiodata='', address='data/realtime.wav'))
         predictions = list(tf.nn.softmax(prediction[0]).numpy())
