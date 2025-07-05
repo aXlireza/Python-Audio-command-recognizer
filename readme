@@ -9,7 +9,7 @@
 
 # Dataset
  on this version, the main dataset is from http://storage.googleapis.com/download.tensorflow.org/data/mini_speech_commands.zip with some custom commands datasets(which got very few samples so not doing much good on 'em)
-
+ kaggle: https://www.kaggle.com/datasets/alirezaataei/custom-voice-command
  You can Download the original dataset into the data folder and copy the content of data/custom_commands into the data/mini_speech_commands directory
 
 # Roadmap
